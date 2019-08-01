@@ -1,0 +1,22 @@
+{
+    "name": "edward-robertson/sagepay-v4",
+    "description": "Package for adding support for Sage Pay Direct protocol v4.00",
+    "type": "library",
+    "require": {
+        "ext-curl": "*",
+        "php": ">=7.x"
+    },
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "Edward Robertson",
+            "email": "post@edwardrobertson.co.uk"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "EdwardRobertson\\SagePayDirect": "src/"
+        }
+    }
+}
