@@ -1,6 +1,6 @@
 <?php
 
-namespace EdwardRobertson;
+namespace EdwardRobertson\SagePayDirect;
 
 class SagePayDirect
 {
@@ -11,6 +11,6 @@ class SagePayDirect
 
     public function hello()
     {
-        echo 'Hello';
+        return 'Hello';
     }
 }
