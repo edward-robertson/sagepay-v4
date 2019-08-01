@@ -13,4 +13,9 @@ class SagePayDirect
     {
         return 'Hello';
     }
+
+    public function goodbye()
+    {
+        return 'Goodbye';
+    }
 }
