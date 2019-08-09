@@ -73,8 +73,19 @@ class SagePayDirect
         return 'Goodbye';
     }
 
+    /**
+     * Copy config variables and other presets into public properties
+     */
     private function setup()
     {
+        $this->apply3dSecure = $this->config['3dsecure']['apply'];
+        $this->applyAvsCv2 = $this->config['avs_cv2'];
+        $this->clientIpAddress = $_SERVER['REMOTE_ADDR'];
+        $this->currency = $this->config['currency'] ?: 'GBP';
+        $this->description = $this->config['description'];
+        $this->vendor = $this->config['vendor'];
+        $this->website = $_SERVER['HTTP_HOST'];
 
+        return $this;
     }
 }
