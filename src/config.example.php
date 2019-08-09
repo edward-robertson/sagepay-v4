@@ -77,9 +77,6 @@ return [
         // mapped, the type string (e.g. 'VISA') will be used instead.
         'card_type_map' => [],
 
-        // Handle pointing to database connection
-        'connection_handle' => '',
-
         // Mapping of possible currency values to the value that will be
         // stored in the database. This is useful if, for example, the website
         // has a currencies table with associated IDs that should be stored
