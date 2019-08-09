@@ -13,9 +13,6 @@ class SagePayDirect
     {
         $this->config = require $pathToConfig;
         $this->dbConnection = $dbConnection;
-
-        print_r($this->config);
-        var_dump($this->dbConnection);
     }
 
     public function hello()
