@@ -56,6 +56,16 @@ class SagePayDirect
         $this->setup();
     }
 
+    public function capture($txType, $amount)
+    {
+        $this->amount = $amount;
+        $this->txType = strtoupper($txType);
+
+        if ($this->validateCapture()) {
+
+        }
+    }
+
     public function dump()
     {
         var_dump($this);
@@ -87,5 +97,40 @@ class SagePayDirect
         $this->website = $_SERVER['HTTP_HOST'];
 
         return $this;
+    }
+
+    /**
+     * Validates the transaction details, throwing exceptions for anything
+     * which is incorrect.
+     *
+     * @return bool
+     */
+    private function validateCapture()
+    {
+        if (!is_numeric($this->amount)) {
+            throw new \InvalidArgumentException('Amount must be numeric');
+        }
+
+        if (!$this->billingAddress instanceof Address) {
+            throw new \InvalidArgumentException('Billing Address must be an instance of the Address object');
+        }
+
+        if (!$this->browser instanceof Browser) {
+            throw new \InvalidArgumentException('Browser must be an instance of the Browser object');
+        }
+
+        if (!$this->card instanceof Card) {
+            throw new \InvalidArgumentException('Card must be an instance of the Card object');
+        }
+
+        if (!$this->deliveryAddress instanceof Address) {
+            throw new \InvalidArgumentException('Delivery address must be an instance of the Address object');
+        }
+
+        if (!in_array($this->txType, ['PAYMENT', 'DEFERRED', 'AUTHENTICATE'])) {
+            throw new \InvalidArgumentException('Transaction type must be one of PAYMENT, DEFERRED, AUTHENTICATE');
+        }
+
+        return true;
     }
 }
