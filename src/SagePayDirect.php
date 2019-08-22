@@ -73,16 +73,6 @@ class SagePayDirect
         return $this;
     }
 
-    public function hello()
-    {
-        return 'Hello';
-    }
-
-    public function goodbye()
-    {
-        return 'Goodbye';
-    }
-
     /**
      * Copy config variables and other presets into public properties
      */
