@@ -38,8 +38,8 @@ class SagePayDirect
     public $referrerId;
     public $storeToken = 0;
     public $surchargeXml;
-    public $threeDsPriorRequestorAuthenticationInfoXml;
     public $threeDsRequestorAuthenticationInfoXml;
+    public $threeDsRequestorPriorAuthenticationInfoXml;
     public $token;
     public $transType = '01';
     public $txType;
