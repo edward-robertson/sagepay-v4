@@ -70,7 +70,9 @@ class SagePayDirect
 
         $this->validateProperties();
         $this->prepareCapturePayload();
-        $this->setTransactionMode();        
+        $this->setTransactionMode();
+
+        return $this->executeCapture();
     }
 
     public function dump()
@@ -88,6 +90,27 @@ class SagePayDirect
     public function browserJavaScript()
     {
         return file_get_contents(__DIR__ . '/js/javascript.html');
+    }
+
+    private function executeCapture()
+    {
+        $postObject = curl_init();
+
+        // SET THE OPTIONS
+        curl_setopt_array($postObject,array(
+            CURLOPT_URL => $this->getRegistrationUrl(),
+            CURLOPT_HEADER => 0,
+            CURLOPT_POST => 1,
+            CURLOPT_POSTFIELDS => http_build_query($this->payload),
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ));
+
+        // GET THE RESPONSE
+        $response = explode(chr(10), curl_exec($postObject));
+
+        print_r($response);
     }
 
     private function generateVendorTxCode()
@@ -130,6 +153,7 @@ class SagePayDirect
             'VendorTxCode' => $this->vendorTxCode ?? $this->generateVendorTxCode(),
             'Amount' => $this->amount,
             'Currency' => $this->currency,
+            'Description' => $this->description,
             'CardHolder' => $this->card->cardHolder,
             'CardNumber' => $this->card->cardNumber,
             'ExpiryDate' => $this->card->expiryDate,
