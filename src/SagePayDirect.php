@@ -108,9 +108,9 @@ class SagePayDirect
         ));
 
         // GET THE RESPONSE
-        $response = explode(chr(10), curl_exec($postObject));
+        $this->parseResponse(curl_exec($postObject));
 
-        print_r($response);
+        return $this;
     }
 
     private function generateVendorTxCode()
@@ -142,6 +142,19 @@ class SagePayDirect
         }
 
         return $this->sagePayDomains['test'] . 'vspdirect-register.vsp';
+    }
+
+    private function parseResponse($response)
+    {
+        $responseLines = explode(chr(10), $response);
+
+        foreach ($responseLines as $line) {
+            list($field, $value) = explode('=', $line, 2);
+
+            $this->$field = $value;
+        }
+
+        return $this;
     }
 
     private function prepareCapturePayload()
