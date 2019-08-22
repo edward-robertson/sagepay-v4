@@ -1,0 +1,31 @@
+<script>
+    document.getElementById('sp4_JavascriptEnabled').value = 1;
+    document.getElementById('sp4_JavaEnabled').value = navigator.javaEnabled() ? 1 : 0;
+    document.getElementById('sp4_ColourDepth').value = screen.colorDepth;
+    document.getElementById('sp4_ScreenHeight').value = screen.height;
+    document.getElementById('sp4_ScreenWidth').value = screen.width;
+    document.getElementById('sp4_TZ').value = new Date().getTimezoneOffset();
+    document.getElementById('sp4_Language').value = navigator.language;
+
+    if (screen.width > 300) {
+        challengeWindowSize = '01';
+    }
+
+    if (screen.width > 440) {
+        challengeWindowSize = '02';
+    }
+
+    if (screen.width > 550) {
+        challengeWindowSize = '03';
+    }
+
+    if (screen.width > 650) {
+        challengeWindowSize = '04';
+    }
+
+    if (screen.width > 1000) {
+        challengeWindowSize = '05';
+    }
+
+    document.getElementById('sp4_ChallengeWindowSize').value = challengeWindowSize;
+</script>

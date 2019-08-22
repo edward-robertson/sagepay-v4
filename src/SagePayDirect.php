@@ -73,6 +73,16 @@ class SagePayDirect
         return $this;
     }
 
+    public function browserFormHtml()
+    {
+        return file_get_contents(__DIR__ . '/html/browser-fields.html');
+    }
+
+    public function browserJavaScript()
+    {
+        return file_get_contents(__DIR__ . '/js/javascript.html');
+    }
+
     /**
      * Copy config variables and other presets into public properties
      */
