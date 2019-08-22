@@ -16,30 +16,39 @@ class Address
 
     /**
      * Address constructor.
-     * Pass the six required address fields here. For other fields such as
-     * address2, phone or state, you can set them directly via e.g.
-     * $address->address2 = 'Test Avenue';
      *
      * @param $firstNames
      * @param $surname
      * @param $address1
+     * @param $address2
      * @param $city
+     * @param $state
      * @param $postCode
      * @param $country
+     * @param $phone
      */
     public function __construct(
         $firstNames,
         $surname,
         $address1,
+        $address2,
         $city,
+        $state,
         $postCode,
-        $country
+        $country,
+        $phone
     ) {
         $this->firstNames = $firstNames;
         $this->surname = $surname;
         $this->address1 = $address1;
+        $this->address2 = $address2;
         $this->city = $city;
         $this->postCode = $postCode;
         $this->country = $country;
+        $this->phone = $phone;
+
+        if ($country == 'US') {
+            $this->state = $state;
+        }
     }
 }
