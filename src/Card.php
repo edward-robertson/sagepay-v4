@@ -25,13 +25,14 @@ class Card
     public function __construct(
         $cardNumber,
         $cardHolder,
-        $expiryDate,
+        $expiryDateMonth,
+        $expiryDateYear,
         $cv2
     ) {
         $this->cardHolder = $cardHolder;
         $this->cardNumber = $this->formatCardNumber($cardNumber);
         $this->cv2 = $cv2;
-        $this->expiryDate = $this->formatExpiryDate($expiryDate);
+        $this->expiryDate = $this->formatExpiryDate($expiryDateMonth . $expiryDateYear);
 
         $this->cardType = $this->setCardTypeFromCardNumber();
     }
