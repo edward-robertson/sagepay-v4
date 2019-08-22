@@ -6,7 +6,14 @@ class SagePayDirect
 {
     private $config;
     private $dbConnection;
+    private $live = true;
+    private $payload;
     private $vpsProtocol = '4.00';
+
+    private $sagePayDomains = [
+        'live' => 'https://live.sagepay.com/gateway/service/',
+        'test' => 'https://test.sagepay.com/gateway/service/',
+    ];
 
     // Refer to Appendix A of the Sage Pay Direct v4.00 Integration and Protocol
     // Guidelines for further information on what each of these fields is used
@@ -61,9 +68,9 @@ class SagePayDirect
         $this->amount = $amount;
         $this->txType = strtoupper($txType);
 
-        if ($this->validateCapture()) {
-
-        }
+        $this->validateProperties();
+        $this->prepareCapturePayload();
+        $this->setTransactionMode();        
     }
 
     public function dump()
@@ -81,6 +88,158 @@ class SagePayDirect
     public function browserJavaScript()
     {
         return file_get_contents(__DIR__ . '/js/javascript.html');
+    }
+
+    private function generateVendorTxCode()
+    {
+        $this->vendorTxCode = $this->config['vendor_tx_code_prefix'] . microtime(true);
+
+        return $this->vendorTxCode;
+    }
+
+    /**
+     * Convert a relative URL to an absolute one by prepending the protocol and
+     * hostname
+     *
+     * @param $path string The relative URL
+     * @return string
+     */
+    private function getAbsoluteUrl($path)
+    {
+        $protocol = $this->requestIsSecure() ? 'https://' : 'http://';
+        $path = '/' . ltrim($path, '/');
+
+        return $protocol . $_SERVER['HTTP_HOST'] . $path;
+    }
+
+    private function getRegistrationUrl()
+    {
+        if ($this->live) {
+            return $this->sagePayDomains['live'] . 'vspdirect-register.vsp';
+        }
+
+        return $this->sagePayDomains['test'] . 'vspdirect-register.vsp';
+    }
+
+    private function prepareCapturePayload()
+    {
+        $this->payload = [
+            'VPSProtocol' => $this->vpsProtocol,
+            'TxType' => $this->txType,
+            'Vendor' => $this->vendor,
+            'VendorTxCode' => $this->vendorTxCode ?? $this->generateVendorTxCode(),
+            'Amount' => $this->amount,
+            'Currency' => $this->currency,
+            'CardHolder' => $this->card->cardHolder,
+            'CardNumber' => $this->card->cardNumber,
+            'ExpiryDate' => $this->card->expiryDate,
+            'CV2' => $this->card->cv2,
+            'CardType' => $this->card->cardType,
+            'Token' => $this->token,
+            'BillingSurname' => $this->billingAddress->surname,
+            'BillingFirstnames' => $this->billingAddress->firstNames,
+            'BillingAddress1' => $this->billingAddress->address1,
+            'BillingAddress2' => $this->billingAddress->address2,
+            'BillingCity' => $this->billingAddress->city,
+            'BillingPostCode' => $this->billingAddress->postCode,
+            'BillingCountry' => $this->billingAddress->country,
+            'BillingState' => $this->billingAddress->state,
+            'BillingPhone' => $this->billingAddress->phone,
+            'DeliverySurname' => $this->deliveryAddress->surname,
+            'DeliveryFirstnames' => $this->deliveryAddress->firstNames,
+            'DeliveryAddress1' => $this->deliveryAddress->address1,
+            'DeliveryAddress2' => $this->deliveryAddress->address2,
+            'DeliveryCity' => $this->deliveryAddress->city,
+            'DeliveryPostCode' => $this->deliveryAddress->postCode,
+            'DeliveryCountry' => $this->deliveryAddress->country,
+            'DeliveryState' => $this->deliveryAddress->state,
+            'DeliveryPhone' => $this->deliveryAddress->phone,
+            'CustomerEMail' => $this->customerEmail,
+            'GiftAidPayment' => $this->giftAidPayment,
+            'ApplyAVSCV2' => $this->applyAvsCv2,
+            'ClientIPAddress' => $this->clientIpAddress,
+            'Apply3DSecure' => $this->apply3dSecure,
+            'CreateToken' => $this->createToken,
+            'StoreToken' => $this->storeToken,
+            'VendorData' => $this->vendorData,
+            'Language' => $this->language,
+            'Website' => $this->website,
+            'BrowserJavascriptEnabled' => $this->browser->javascriptEnabled,
+            'BrowserJavaEnabled' => $this->browser->javaEnabled,
+            'BrowserColorDepth' => $this->browser->colorDepth,
+            'BrowserScreenHeight' => $this->browser->screenHeight,
+            'BrowserScreenWidth' => $this->browser->screenWidth,
+            'BrowserTZ' => $this->browser->tz,
+            'BrowserAcceptHeader' => $this->browser->accepts,
+            'BrowserLanguage' => $this->browser->language,
+            'BrowserUserAgent' => $this->browser->userAgent,
+            'ThreeDSNotificationURL' => $this->getAbsoluteUrl($this->config['3dsecure']['notification_url']),
+            'ChallengeWindowSize' => $this->browser->challengeWindowSize,
+            'ThreeDSRequestorAuthenticationInfoXML' => $this->threeDsRequestorAuthenticationInfoXml,
+            'ThreeDSRequestorPriorAuthenticationInfoXML' => $this->threeDsRequestorPriorAuthenticationInfoXml,
+            'AcctInfoXML' => $this->acctInfoXml,
+            'AcctID' => $this->acctId,
+            'MerchantRiskIndicatorXML' => $this->merchantRiskIndicatorXml,
+            'TransType' => $this->transType,
+        ];
+
+        if ($this->card->cardType == 'PAYPAL') {
+            $this->payload['PayPalCallbackURL'] = $this->payPalCallbackUrl;
+            $this->payload['BillingAgreement'] = $this->billingAgreement;
+        }
+    }
+
+    /**
+     * Tests the request to see if it's secure. Requires $_SERVER['HTTPS'] to be
+     * set and 'on', or for load balancers, the appropriate headers to be
+     * forwarded
+     *
+     * @return bool
+     */
+    private function requestIsSecure()
+    {
+        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
+            return true;
+        }
+
+        if (!empty($_SERVER['HTTP_X_FORWARDED_PROTO'])
+            && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'
+            || !empty($_SERVER['HTTP_X_FORWARDED_SSL'])
+            && $_SERVER['HTTP_X_FORWARDED_SSL'] == 'on'
+        ) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function setTransactionMode()
+    {
+        $testTriggerScore = 0;
+
+        foreach ($this->config['test']['card_numbers'] as $cardNumber) {
+            if ($this->card->cardNumber == $cardNumber) {
+                $testTriggerScore += $this->config['test']['weight']['card_numbers'];
+            }
+        }
+
+        foreach ($this->config['test']['ip_addresses'] as $ipAddress) {
+            if ($this->clientIpAddress == $ipAddress) {
+                $testTriggerScore += $this->config['test']['weight']['ip_addresses'];
+            }
+        }
+
+        foreach ($this->config['test']['hosts'] as $host) {
+            if ($this->website == $host) {
+                $testTriggerScore += $this->config['test']['weight']['hosts'];
+            }
+        }
+
+        // TODO: Test field support
+
+        $this->live = ($testTriggerScore < $this->config['test']['trigger_score']);
+
+        return $this;
     }
 
     /**
@@ -105,7 +264,7 @@ class SagePayDirect
      *
      * @return bool
      */
-    private function validateCapture()
+    private function validateProperties()
     {
         if (!is_numeric($this->amount)) {
             throw new \InvalidArgumentException('Amount must be numeric');
