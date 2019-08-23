@@ -63,6 +63,16 @@ class SagePayDirect
         $this->setup();
     }
 
+    public function browserFormHtml()
+    {
+        return file_get_contents(__DIR__ . '/html/browser-fields.html');
+    }
+
+    public function browserJavaScript()
+    {
+        return file_get_contents(__DIR__ . '/js/javascript.html');
+    }
+
     public function capture($txType, $amount)
     {
         $this->amount = $amount;
@@ -72,7 +82,9 @@ class SagePayDirect
         $this->prepareCapturePayload();
         $this->setTransactionMode();
 
-        return $this->executeCapture();
+        $this->executeCapture();
+
+        return true;
     }
 
     public function dump()
@@ -82,14 +94,24 @@ class SagePayDirect
         return $this;
     }
 
-    public function browserFormHtml()
+    public function is3dRedirect()
     {
-        return file_get_contents(__DIR__ . '/html/browser-fields.html');
+        return $this->Status == '3DAUTH';
     }
 
-    public function browserJavaScript()
+    public function set3dSession()
     {
-        return file_get_contents(__DIR__ . '/js/javascript.html');
+        $_SESSION['sp4_3ds_detail'] = [
+            'ACSURL' => $this->ACSURL,
+            'CReq' => $this->CReq ?? '',
+            'MD' => $this->MD ?? '',
+            'PAReq' => $this->PAReq ?? '',
+        ];
+    }
+
+    public function transactionSucceeded()
+    {
+        return in_array($this->Status, ['OK', 'AUTHENTICATED', 'REGISTERED']);
     }
 
     private function executeCapture()
@@ -151,7 +173,7 @@ class SagePayDirect
         foreach ($responseLines as $line) {
             list($field, $value) = explode('=', $line, 2);
 
-            $this->$field = $value;
+            $this->$field = trim($value);
         }
 
         return $this;
