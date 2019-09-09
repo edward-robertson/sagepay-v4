@@ -325,6 +325,8 @@ class SagePayDirect
      */
     private function setup()
     {
+        session_start();
+
         $this->apply3dSecure = $this->config['3dsecure']['apply'];
         $this->applyAvsCv2 = $this->config['avs_cv2'];
         $this->clientIpAddress = $_SERVER['REMOTE_ADDR'];
