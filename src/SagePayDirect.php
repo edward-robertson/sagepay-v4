@@ -94,6 +94,11 @@ class SagePayDirect
         return $this;
     }
 
+    public function get3dSession()
+    {
+        return $_SESSION['sp4_3ds_detail'];
+    }
+
     public function is3dRedirect()
     {
         if ($this->Status == '3DAUTH') {
