@@ -134,6 +134,18 @@ class SagePayDirect
         return true;
     }
 
+    public function complete3ds($response)
+    {
+        $this->live = false;
+        $this->vendorTxCode = $_SESSION['sp4_vtx_code'];
+
+        $this->prepareCallbackPayload($response);
+
+        $this->execute3dsCallback();
+
+        print_r($response);
+    }
+
     public function dump()
     {
         var_dump($this);
@@ -189,6 +201,26 @@ class SagePayDirect
         return in_array($this->Status, ['OK', 'AUTHENTICATED', 'REGISTERED']);
     }
 
+    private function execute3dsCallback()
+    {
+        $postObject = curl_init();
+
+        // SET THE OPTIONS
+        curl_setopt_array($postObject,array(
+            CURLOPT_URL => $this->get3dCallbackUrl(),
+            CURLOPT_HEADER => 0,
+            CURLOPT_POST => 1,
+            CURLOPT_POSTFIELDS => http_build_query($this->payload),
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_SSL_VERIFYPEER => false,
+        ));
+
+        $this->parseResponse(curl_exec($postObject));
+
+        return $this;
+    }
+
     private function executeCapture()
     {
         $this->setVtxCodeSession();
@@ -217,6 +249,15 @@ class SagePayDirect
         $this->vendorTxCode = $this->config['vendor_tx_code_prefix'] . microtime(true);
 
         return $this->vendorTxCode;
+    }
+
+    private function get3dCallbackUrl()
+    {
+        if ($this->live) {
+            return $this->sagePayDomains['live'] . 'direct3dcallback.vsp';
+        }
+
+        return $this->sagePayDomains['test'] . 'direct3dcallback.vsp';
     }
 
     /**
@@ -262,6 +303,18 @@ class SagePayDirect
             list($field, $value) = explode('=', $line, 2);
 
             $this->$field = trim($value);
+        }
+
+        return $this;
+    }
+
+    private function prepareCallbackPayload($response)
+    {
+        if (isset($response['MD'], $response['PaRes'])) {
+            $this->payload = [
+                'MD' => $response['MD'],
+                'PARes' => $response['PaRes']
+            ];
         }
 
         return $this;
