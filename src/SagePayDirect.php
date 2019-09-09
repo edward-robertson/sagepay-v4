@@ -96,17 +96,13 @@ class SagePayDirect
 
     public function is3dRedirect()
     {
-        return $this->Status == '3DAUTH';
-    }
+        if ($this->Status == '3DAUTH') {
+            $this->set3dSession();
+            return true;
+        }
 
-    public function set3dSession()
-    {
-        $_SESSION['sp4_3ds_detail'] = [
-            'ACSURL' => $this->ACSURL,
-            'CReq' => $this->CReq ?? '',
-            'MD' => $this->MD ?? '',
-            'PAReq' => $this->PAReq ?? '',
-        ];
+        $this->unset3dSession();
+        return false;
     }
 
     public function transactionSucceeded()
@@ -272,6 +268,16 @@ class SagePayDirect
         return false;
     }
 
+    private function set3dSession()
+    {
+        $_SESSION['sp4_3ds_detail'] = [
+            'ACSURL' => $this->ACSURL,
+            'CReq' => $this->CReq ?? '',
+            'MD' => $this->MD ?? '',
+            'PAReq' => $this->PAReq ?? '',
+        ];
+    }
+
     private function setTransactionMode()
     {
         $testTriggerScore = 0;
@@ -320,6 +326,20 @@ class SagePayDirect
         $this->website = $_SERVER['HTTP_HOST'];
 
         return $this;
+    }
+
+    /**
+     * Unset the 3D Secure detail session, if it exists
+     *
+     * @return bool
+     */
+    private function unset3dSession()
+    {
+        if (isset($_SESSION['sp4_3ds_detail'])) {
+            unset($_SESSION['sp4_3ds_detail']);
+        }
+
+        return true;
     }
 
     /**
