@@ -96,6 +96,17 @@ class Address
         }
     }
 
+    /**
+     * Validate that the ISO codes provided for country (and, if required,
+     * state) are present in the arrays supplied for each. State only needs to
+     * be verified if the country is US.
+     *
+     * Throws an InvalidArgumentException if either code fails.
+     *
+     * @param string $country Two letter ISO country code
+     * @param string $state Two letter US state code
+     * @return bool
+     */
     private function validateTwoLetterCodes($country, $state)
     {
         if (!in_array($country, $this->validIsoCodes)) {

@@ -55,6 +55,12 @@ class SagePayDirect
     public $vendorTxCode;
     public $website;
 
+    /**
+     * SagePayDirect constructor.
+     *
+     * @param string $pathToConfig Physical path to configuration array
+     * @param mysqli $dbConnection Database connection that has been established outside the class
+     */
     public function __construct($pathToConfig, $dbConnection)
     {
         $this->config = require $pathToConfig;
@@ -63,6 +69,12 @@ class SagePayDirect
         $this->setup();
     }
 
+    /**
+     * Output the HTML form for a 3D Secure callback failure
+     *
+     * @param string $redirect URL for the form to send a GET request to
+     * @return mixed
+     */
     public function browser3dsFailureForm($redirect)
     {
         $form = file_get_contents(__DIR__ . '/html/3d-secure-no.html');
@@ -70,6 +82,18 @@ class SagePayDirect
         return str_replace('##REDIRECT##', $redirect, $form);
     }
 
+    /**
+     * Output the 3D Secure form in order to begin the 3D Secure authentication
+     * process.
+     *
+     * It is assumed that this will load inside an IFrame. For compatability
+     * with browsers that can't do this, you can also call the function and
+     * pass "false" as the only argument to load a non-iframe friendly
+     * version.
+     *
+     * @param bool $iFrame true if loaded within an iframe, otherwise false
+     * @return false|mixed|string|string[]|null
+     */
     public function browser3dsForm($iFrame = true)
     {
         $form = file_get_contents(__DIR__ . '/html/3d-secure-form.html');
@@ -112,11 +136,23 @@ class SagePayDirect
         return $form;
     }
 
+    /**
+     * Output the auto-submission Javascript for the 3DS redirect form inside
+     * an iframe.
+     *
+     * @return false|string
+     */
     public function browser3dsJavascript()
     {
         return file_get_contents(__DIR__ . '/js/3ds-auto-submit.html');
     }
 
+    /**
+     * Output the HTML form for a 3D Secure callback success
+     *
+     * @param string $redirect URL for the form to send a POST request to
+     * @return mixed
+     */
     public function browser3dsSuccessForm($redirect)
     {
         $form = file_get_contents(__DIR__ . '/html/3d-secure-yes.html');
@@ -124,16 +160,35 @@ class SagePayDirect
         return str_replace('##REDIRECT##', $redirect, $form);
     }
 
+    /**
+     * Output the hidden form fields required to collect browser data for
+     * 3D Secure v2.
+     *
+     * @return false|string
+     */
     public function browserFormHtml()
     {
         return file_get_contents(__DIR__ . '/html/browser-fields.html');
     }
 
+    /**
+     * Output the Javascript to collect the browser data and populate the form
+     * fields from browserFormHtml() for 3D Secure v2.
+     *
+     * @return false|string
+     */
     public function browserJavaScript()
     {
         return file_get_contents(__DIR__ . '/js/javascript.html');
     }
 
+    /**
+     * Attempt to capture funds from Sage Pay.
+     *
+     * @param string $txType Capture type to use. Must PAYMENT, DEFERRED or AUTHENTICATE
+     * @param float $amount Amount (in major and minor currency units e.g. 10.99)
+     * @return bool
+     */
     public function capture($txType, $amount)
     {
         $this->amount = $amount;
@@ -148,6 +203,12 @@ class SagePayDirect
         return true;
     }
 
+    /**
+     * Execute a 3D Secure callback
+     *
+     * @param array $response 3D Secure callback fields received from issuing bank
+     * @return bool
+     */
     public function complete3ds($response)
     {
         $this->live = false;
@@ -157,9 +218,14 @@ class SagePayDirect
 
         $this->execute3dsCallback();
 
-        print_r($response);
+        return true;
     }
 
+    /**
+     * Dump the object for debugging purposes. Chainable.
+     *
+     * @return $this
+     */
     public function dump()
     {
         var_dump($this);
@@ -167,6 +233,11 @@ class SagePayDirect
         return $this;
     }
 
+    /**
+     * Return the content of the 3D Secure session for setting up the redirect.
+     *
+     * @return mixed
+     */
     public function get3dSession()
     {
         return $_SESSION['sp4_3ds_detail'];
@@ -199,6 +270,14 @@ class SagePayDirect
         return ['100%', 610];
     }
 
+    /**
+     * Set the 3D Secure session and return true if the response status from
+     * Sage Pay indicates a requirement for 3D Secure authentication.
+     *
+     * Return false and kill the session if not.
+     *
+     * @return bool
+     */
     public function is3dRedirect()
     {
         if ($this->Status == '3DAUTH') {
@@ -210,11 +289,24 @@ class SagePayDirect
         return false;
     }
 
+    /**
+     * Returns true if the Sage Pay response status indicates a successful
+     * authorisation.
+     *
+     * @return bool
+     */
     public function transactionSucceeded()
     {
         return in_array($this->Status, ['OK', 'AUTHENTICATED', 'REGISTERED']);
     }
 
+    /**
+     * Execute the 3D Secure callback to complete a 3D Secure authentication
+     * attempt. Parses Sage Pay's response into class properties for later use,
+     * and then returns itself. Chainable.
+     *
+     * @return $this
+     */
     private function execute3dsCallback()
     {
         $postObject = curl_init();
@@ -235,6 +327,12 @@ class SagePayDirect
         return $this;
     }
 
+    /**
+     * Execute a capture attempt. Parses Sage Pay's response into class
+     * properties for later use, and then returns itself. Chainable.
+     *
+     * @return $this
+     */
     private function executeCapture()
     {
         $this->setVtxCodeSession();
@@ -258,6 +356,13 @@ class SagePayDirect
         return $this;
     }
 
+    /**
+     * Generate a vendor TX code using microtime (with milliseconds) and the
+     * supplied vendor TX code prefix. Will be called during capture payload
+     * building if a vendor TX code has not been manually specified.
+     *
+     * @return string
+     */
     private function generateVendorTxCode()
     {
         $this->vendorTxCode = $this->config['vendor_tx_code_prefix'] . microtime(true);
@@ -265,6 +370,11 @@ class SagePayDirect
         return $this->vendorTxCode;
     }
 
+    /**
+     * Return the full URL to post the 3D Secure callback payload to.
+     *
+     * @return string
+     */
     private function get3dCallbackUrl()
     {
         if ($this->live) {
@@ -289,6 +399,11 @@ class SagePayDirect
         return $protocol . $_SERVER['HTTP_HOST'] . $path;
     }
 
+    /**
+     * Return the full URL to post the transaction registration payload to.
+     *
+     * @return string
+     */
     private function getRegistrationUrl()
     {
         if ($this->live) {
@@ -298,17 +413,36 @@ class SagePayDirect
         return $this->sagePayDomains['test'] . 'vspdirect-register.vsp';
     }
 
+    /**
+     * Test 3D Secure storage session for 3D Secure v1 fields (PAReq and MD).
+     *
+     * @return bool
+     */
     private function is3dsV1()
     {
         return isset($_SESSION['sp4_3ds_detail']['PAReq'])
             && isset($_SESSION['sp4_3ds_detail']['MD']);
     }
 
+    /**
+     * Test 3D Secure storage session to see if the 3D Secure v2 CReq field
+     * contains data.
+     *
+     * @return bool
+     */
     private function is3dsV2()
     {
-        return empty($_SESSION['sp4_3ds_detail']);
+        return empty($_SESSION['sp4_3ds_detail']['CReq']);
     }
 
+    /**
+     * Parse Sage Pay's response into class properties. The response format is
+     * name=value, separated by line feeds (ASCII character 10). Returns the
+     * object when complete. Chainable.
+     *
+     * @param $response
+     * @return $this
+     */
     private function parseResponse($response)
     {
         $responseLines = explode(chr(10), $response);
@@ -322,6 +456,12 @@ class SagePayDirect
         return $this;
     }
 
+    /**
+     * Prepare the 3D Secure callback payload. Chainable.
+     *
+     * @param $response
+     * @return $this
+     */
     private function prepareCallbackPayload($response)
     {
         if (isset($response['MD'], $response['PaRes'])) {
@@ -334,6 +474,9 @@ class SagePayDirect
         return $this;
     }
 
+    /**
+     * Prepare the payload for a capture attempt.
+     */
     private function prepareCapturePayload()
     {
         $this->payload = [
@@ -406,7 +549,7 @@ class SagePayDirect
     /**
      * Tests the request to see if it's secure. Requires $_SERVER['HTTPS'] to be
      * set and 'on', or for load balancers, the appropriate headers to be
-     * forwarded
+     * forwarded.
      *
      * @return bool
      */
@@ -427,6 +570,10 @@ class SagePayDirect
         return false;
     }
 
+    /**
+     * Set the 3D Secure storage session which will be recalled when attempting
+     * to complete the authorisation attempt.
+     */
     private function set3dSession()
     {
         $_SESSION['sp4_3ds_detail'] = [
@@ -438,6 +585,22 @@ class SagePayDirect
         ];
     }
 
+    /**
+     * Determine whether the transaction should be executed as a live
+     * transaction or a test.
+     *
+     * A "trigger score" and "weights" should be set in the per-project config
+     * files. This function will run various tests against the payload and
+     * score the transaction using the weights. If the final score is equal to
+     * or exceeds the trigger score, then the transaction will be conducted as
+     * a test.
+     *
+     * Note that any IP being used as the source of a transaction (e.g. the
+     * server hosting the code) must appear in the appropriate whitelist in
+     * My Sage Pay.
+     *
+     * @return $this
+     */
     private function setTransactionMode()
     {
         $testTriggerScore = 0;
@@ -473,7 +636,7 @@ class SagePayDirect
     }
 
     /**
-     * Copy config variables and other presets into public properties
+     * Copy config variables and other presets into public properties.
      */
     private function setup()
     {
@@ -491,7 +654,7 @@ class SagePayDirect
     }
 
     /**
-     * Store the vendor TX code in a session for future use
+     * Store the vendor TX code in a session for future use.
      *
      * @return bool
      */

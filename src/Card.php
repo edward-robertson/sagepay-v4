@@ -4,6 +4,13 @@ namespace EdwardRobertson\SagePayDirect;
 
 class Card
 {
+    /**
+     * List of "magic" Sage Pay cardholder names which will force certain
+     * 3D Secure responses for testing scenarios such as forced auth, forced
+     * fail, 3DS v1 and 3DS v2.
+     * 
+     * var @array
+     */
     private $magicValues = [
         'CHALLENGE',
         'ERROR',
@@ -23,6 +30,7 @@ class Card
 
     /**
      * Card constructor.
+     * 
      * Pass the card number, cardholder name, expiry date and CV2. Card type
      * will be worked out automatically from the supplied card number. You can
      * override the card type manually if required:
