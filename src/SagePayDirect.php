@@ -169,6 +169,17 @@ class SagePayDirect
         return $this->sagePayDomains['test'] . 'vspdirect-register.vsp';
     }
 
+    private function is3dsV1()
+    {
+        return isset($_SESSION['sp4_3ds_detail']['PAReq'])
+            && isset($_SESSION['sp4_3ds_detail']['MD']);
+    }
+
+    private function is3dsV2()
+    {
+        return empty($_SESSION['sp4_3ds_detail']);
+    }
+
     private function parseResponse($response)
     {
         $responseLines = explode(chr(10), $response);
