@@ -274,6 +274,7 @@ class SagePayDirect
     {
         $_SESSION['sp4_3ds_detail'] = [
             'ACSURL' => $this->ACSURL,
+            'ChallengeWindowSize' => $this->browser->challengeWindowSize,
             'CReq' => $this->CReq ?? '',
             'MD' => $this->MD ?? '',
             'PAReq' => $this->PAReq ?? '',
