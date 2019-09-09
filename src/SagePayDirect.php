@@ -63,6 +63,53 @@ class SagePayDirect
         $this->setup();
     }
 
+    public function browser3dsForm($iFrame = true)
+    {
+        $form = file_get_contents(__DIR__ . '/html/3d-secure-form.html');
+
+        // Remove 3DS version tags
+        if ($this->is3dsV1()) {
+            $form = preg_replace('#<v2>.*?</v2>#si', '', $form);
+
+            $form = str_replace([
+                '##MD##',
+                '##PAREQ##',
+                '##TERMURL##',
+                '<v1>',
+                '</v1>',
+            ], [
+                $_SESSION['sp4_3ds_detail']['MD'],
+                $_SESSION['sp4_3ds_detail']['PAReq'],
+                $this->getAbsoluteUrl($this->config['3dsecure']['notification_url']),
+                '',
+                '',
+            ], $form);
+        }
+
+        if ($this->is3dsV2()) {
+            $form = preg_replace('#<v1>.*?</v1>#si', '', $form);
+        }
+
+        // Form ID needs to be different for the iframe version
+        $formId = $iFrame ? 'sp4_3ds_form_iframe' : 'sp4_3ds_form';
+
+        // Final replacements
+        $form = str_replace([
+            '##ACSURL##',
+            '##FORMID##',
+        ], [
+            $_SESSION['sp4_3ds_detail']['ACSURL'],
+            $formId,
+        ], $form);
+
+        return $form;
+    }
+
+    public function browser3dsJavascript()
+    {
+        return file_get_contents(__DIR__ . '/js/3ds-auto-submit.html');
+    }
+
     public function browserFormHtml()
     {
         return file_get_contents(__DIR__ . '/html/browser-fields.html');
@@ -97,6 +144,33 @@ class SagePayDirect
     public function get3dSession()
     {
         return $_SESSION['sp4_3ds_detail'];
+    }
+
+    /**
+     * Return a width and height after checking the value of the
+     * ChallengeWindowSize sent in the 3D Secure session.
+     *
+     * @return array
+     */
+    public function getChallengeWindowDimensions()
+    {
+        switch ($_SESSION['sp4_3ds_detail']['ChallengeWindowSize']) {
+            case '01':
+                return [260, 410];
+                break;
+            case '02':
+                return [400, 410];
+                break;
+            case '03':
+                return [510, 610];
+                break;
+            case '04':
+                return [610, 410];
+                break;
+        }
+
+        // Any other value is assumed to be "full screen"
+        return ['100%', 610];
     }
 
     public function is3dRedirect()
