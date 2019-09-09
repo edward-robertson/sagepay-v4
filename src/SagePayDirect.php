@@ -112,6 +112,8 @@ class SagePayDirect
 
     private function executeCapture()
     {
+        $this->setVtxCodeSession();
+
         $postObject = curl_init();
 
         // SET THE OPTIONS
@@ -326,6 +328,18 @@ class SagePayDirect
         $this->website = $_SERVER['HTTP_HOST'];
 
         return $this;
+    }
+
+    /**
+     * Store the vendor TX code in a session for future use
+     *
+     * @return bool
+     */
+    private function setVtxCodeSession()
+    {
+        $_SESSION['sp4_vtx_code'] = $this->vendorTxCode;
+
+        return true;
     }
 
     /**
