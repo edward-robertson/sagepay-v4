@@ -294,6 +294,11 @@ class SagePayDirect
             }
         }
 
+        // If cardholder is a "magic" value, force test mode
+        if ($this->card->cardHolderIsMagic()) {
+            $testTriggerScore += $this->config['test']['trigger_score'];
+        }
+
         // TODO: Test field support
 
         $this->live = ($testTriggerScore < $this->config['test']['trigger_score']);

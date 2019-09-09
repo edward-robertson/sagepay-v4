@@ -4,6 +4,17 @@ namespace EdwardRobertson\SagePayDirect;
 
 class Card
 {
+    private $magicValues = [
+        'CHALLENGE',
+        'ERROR',
+        'NOTAUTH',
+        'NOTENROLLED',
+        'PROOFATTEMPT',
+        'STATUS201DS',
+        'SUCCESSFUL',
+        'TECHNICALDIFFICULTIES',
+    ];
+
     public $cardHolder;
     public $cardNumber;
     public $cardType;
@@ -35,6 +46,19 @@ class Card
         $this->expiryDate = $this->formatExpiryDate($expiryDateMonth . $expiryDateYear);
 
         $this->cardType = $this->setCardTypeFromCardNumber();
+    }
+
+    /**
+     * Test to see if the cardholder name is one of Sage Pay's "magic values"
+     * used to simulate various 3D Secure return states.
+     *
+     * If true, the transaction should be forced into test mode.
+     *
+     * @return bool
+     */
+    public function cardHolderIsMagic()
+    {
+        return in_array($this->cardHolder, $this->magicValues);
     }
 
     /**
