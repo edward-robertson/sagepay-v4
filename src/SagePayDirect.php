@@ -63,6 +63,13 @@ class SagePayDirect
         $this->setup();
     }
 
+    public function browser3dsFailureForm($redirect)
+    {
+        $form = file_get_contents(__DIR__ . '/html/3d-secure-no.html');
+
+        return str_replace('##REDIRECT##', $redirect, $form);
+    }
+
     public function browser3dsForm($iFrame = true)
     {
         $form = file_get_contents(__DIR__ . '/html/3d-secure-form.html');
@@ -108,6 +115,13 @@ class SagePayDirect
     public function browser3dsJavascript()
     {
         return file_get_contents(__DIR__ . '/js/3ds-auto-submit.html');
+    }
+
+    public function browser3dsSuccessForm($redirect)
+    {
+        $form = file_get_contents(__DIR__ . '/html/3d-secure-yes.html');
+
+        return str_replace('##REDIRECT##', $redirect, $form);
     }
 
     public function browserFormHtml()
